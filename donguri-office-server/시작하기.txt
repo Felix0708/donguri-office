@@ -1,0 +1,30 @@
+동구리 오피스 — Claude Code 연동판 시작하기
+=============================================
+
+■ 필요한 것
+  - Claude Code 설치됨 (이미 있음 ✓, Pro 구독으로 작동 — API 키 불필요)
+  - Node.js (터미널에서 `node -v` 로 확인. 없으면 https://nodejs.org 에서 LTS 설치)
+
+■ 실행 방법 (터미널에서)
+  1. cd "/Users/donguri/Claude/portpolio/start-up/동구리오피스-서버"
+  2. node server.js
+  3. 브라우저에서 http://localhost:3777 열기
+  ※ office.html 파일을 더블클릭으로 직접 열면 작동하지 않습니다. 꼭 서버로 여세요.
+
+■ 첫 설정
+  - "프로젝트 폴더"에 stock-briefing 저장소 경로 입력 (예: /Users/donguri/stock-briefing)
+    → 직원들이 이 폴더의 실제 파일을 읽고 작업합니다.
+  - 실행 권한:
+      제안만        → 파일 안 건드림. 분석/설계/리뷰용. 안전.
+      파일 수정 허용 → 코드를 실제로 작성/수정. push는 안 함. (평소 추천)
+      전권 위임     → git push, 배포, 설치까지 알아서. 편하지만 주의.
+  - 추론 수준: 복잡한 설계/디버깅이면 "깊게".
+
+■ 끄는 법
+  서버 터미널에서 Ctrl+C
+
+■ 참고
+  - Vercel/Supabase 자동화: "전권 위임" 모드에서 직원들이 vercel/supabase CLI를
+    쓸 수 있지만, 최초 로그인(vercel login 등)은 터미널에서 직접 한 번 해줘야 합니다.
+  - Codex CLI를 설치하면(npm i -g @openai/codex) 직원 두뇌로 Codex도 선택 가능해집니다.
+  - 결과물/설정은 브라우저(localStorage)에 저장됩니다.

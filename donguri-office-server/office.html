@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>동구리 오피스</title>
+<style>
+  :root{
+    --bg:#1a1c2c; --panel:#24273a; --panel2:#2e3250; --ink:#e8e9f3; --sub:#9aa0c3;
+    --accent:#ffcd75; --green:#38b764; --red:#e5484d; --blue:#41a6f6; --purple:#8d56b0;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:'Segoe UI',Pretendard,Apple SD Gothic Neo,sans-serif; padding:16px;}
+  h1{font-size:20px; letter-spacing:1px; margin-bottom:4px;}
+  h1 .dot{color:var(--accent);}
+  .tagline{color:var(--sub); font-size:12px; margin-bottom:14px;}
+  .layout{display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;}
+  .leftcol{flex:1 1 640px; min-width:320px; display:flex; flex-direction:column; gap:14px;}
+  .officeWrap{position:relative; container-type:inline-size;}
+  #signText{
+    position:absolute; left:3.4%; top:2.5%; width:26.6%; height:8.9%;
+    display:flex; align-items:center; justify-content:center;
+    color:#ffcd75; font-weight:800; font-size:3cqw; letter-spacing:.25cqw;
+    pointer-events:none; text-shadow:0 .2cqw 0 #000; z-index:4; white-space:nowrap;
+  }
+  canvas{width:100%; display:block; image-rendering:pixelated; border-radius:10px; border:3px solid #14152233; box-shadow:0 8px 30px #0007;}
+  .bubble{
+    position:absolute; transform:translate(-50%,-100%); background:#fffef4; color:#222;
+    border:2px solid #222; border-radius:8px; padding:3px 8px; font-size:12px; font-weight:600;
+    white-space:nowrap; max-width:230px; overflow:hidden; text-overflow:ellipsis; pointer-events:none; z-index:5;
+  }
+  .bubble:after{content:''; position:absolute; left:50%; bottom:-7px; transform:translateX(-50%);
+    border:5px solid transparent; border-top-color:#222;}
+  .side{flex:0 1 360px; min-width:300px; display:flex; flex-direction:column; gap:12px;}
+  .card{background:var(--panel); border-radius:10px; padding:14px;}
+  .card h2{font-size:13px; color:var(--accent); margin-bottom:10px; letter-spacing:.5px;}
+  label{font-size:11px; color:var(--sub); display:block; margin-bottom:3px;}
+  input[type=text], select, textarea{
+    width:100%; background:var(--panel2); border:1px solid #444a75; color:var(--ink);
+    border-radius:6px; padding:8px; font-size:13px; margin-bottom:8px; font-family:inherit;
+  }
+  textarea{resize:vertical; min-height:64px;}
+  .row{display:flex; gap:8px; align-items:center;}
+  .chk{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--sub); margin-bottom:8px;}
+  button{
+    background:var(--accent); color:#1a1c2c; border:none; border-radius:6px; padding:9px 14px;
+    font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  button:hover{filter:brightness(1.08);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  button.ghost{background:var(--panel2); color:var(--ink); border:1px solid #444a75;}
+  button.mini{font-size:11px; padding:5px 8px; font-weight:600; background:var(--panel2); color:var(--sub); border:1px solid #444a75;}
+  button.mini:hover{color:var(--ink);}
+  .staff{display:flex; flex-direction:column; gap:6px;}
+  .staffRow{display:flex; align-items:center; gap:8px; font-size:12px; background:var(--panel2); border-radius:6px; padding:6px 8px;}
+  .staffRow select{width:auto; margin:0; padding:3px 4px; font-size:11px; margin-left:auto;}
+  .staffRow .st{font-size:11px; color:var(--sub); white-space:nowrap;}
+  .swatch{width:10px; height:10px; border-radius:2px; flex:none;}
+  .dot2{width:8px; height:8px; border-radius:50%; flex:none; display:inline-block;}
+  #srvStat{font-size:11.5px; line-height:1.6; margin-bottom:10px; padding:8px 10px; border-radius:6px; background:var(--panel2);}
+  #srvStat.bad{color:var(--red);}
+  #srvStat.good{color:var(--green);}
+  #log{font-size:11.5px; line-height:1.55; max-height:160px; overflow-y:auto; color:var(--sub);}
+  #log .t{color:#666d97; margin-right:6px;}
+  #log .ok{color:var(--green);} #log .err{color:var(--red);} #log .hl{color:var(--ink);}
+  #projects{display:flex; flex-direction:column; gap:6px;}
+  .projRow{display:flex; align-items:center; gap:8px; background:var(--panel2); border-radius:6px; padding:8px; font-size:12px; cursor:pointer;}
+  .projRow:hover{background:#3a3f63;}
+  .projRow .nm{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  #briefEmpty{font-size:12px; color:var(--sub);}
+  .planLine{font-size:13px; margin-bottom:10px; line-height:1.6;}
+  .planLine b{color:var(--accent);}
+  .assign{background:var(--panel2); border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:12.5px;}
+  .assign .head{display:flex; align-items:center; gap:8px; margin-bottom:4px;}
+  .assign .who{font-weight:700;}
+  .assign .role{color:var(--sub); font-size:11px;}
+  .assign .stat{margin-left:auto; font-size:11px;}
+  .assign .task{color:var(--sub); line-height:1.55;}
+  .assign details{margin-top:8px;}
+  .assign summary{cursor:pointer; font-size:11.5px; color:var(--blue);}
+  .assign .out{margin-top:8px; font-size:12.5px; line-height:1.65; background:#1c1f33; border-radius:6px; padding:10px 12px; max-height:300px; overflow-y:auto;}
+  .rawWrap{margin-top:6px;}
+  .rawWrap summary{cursor:pointer; font-size:11.5px; color:var(--sub);}
+  .rawWrap pre{background:#1c1f33; border-radius:6px; padding:10px; font-size:11px; overflow-x:auto; margin-top:6px; color:var(--sub);}
+  .presets{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;}
+  #modalBg{position:fixed; inset:0; background:#000a; display:none; z-index:50; align-items:center; justify-content:center; padding:20px;}
+  #modal{background:var(--panel); border-radius:12px; max-width:820px; width:100%; max-height:86vh; display:flex; flex-direction:column;}
+  #modalHead{display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid #444a75;}
+  #modalHead h3{font-size:15px; flex:1;}
+  #modalBody{padding:18px 22px; overflow-y:auto; font-size:14px; line-height:1.7;}
+  .md h1,.md h2,.md h3{margin:14px 0 8px; color:var(--accent);}
+  .md h1{font-size:19px;} .md h2{font-size:16px;} .md h3{font-size:14px;}
+  .md p{margin:8px 0;}
+  .md ul,.md ol{margin:8px 0 8px 22px;}
+  .md pre{background:#14152a; border-radius:8px; padding:12px; overflow-x:auto; font-size:12.5px; margin:10px 0;}
+  .md code{font-family:Consolas,monospace; background:#14152a; padding:1px 5px; border-radius:4px; font-size:12.5px;}
+  .md pre code{padding:0; background:none;}
+  .md hr{border:none; border-top:1px solid #444a75; margin:14px 0;}
+  .md strong{color:var(--ink);}
+</style>
+</head>
+<body>
+<h1>동구리 오피스<span class="dot">.</span></h1>
+
+<div class="layout">
+  <div class="leftcol">
+    <div class="officeWrap">
+      <canvas id="cv"></canvas>
+      <div id="signText">동구리 오피스</div>
+      <div id="bubbles"></div>
+    </div>
+
+    <div class="card">
+      <h2>📢 팀장 분배안 &amp; 작업 현황</h2>
+      <div id="briefBody"><div id="briefEmpty">아직 지시가 없습니다. 지시를 내리면 김팀장의 업무 분배안이 여기에 표시됩니다.</div></div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <h2>⚙️ 회사 설정</h2>
+      <div id="srvStat">서버 연결 확인 중...</div>
+      <label>프로젝트 폴더 (직원들이 실제로 작업할 곳)</label>
+      <input type="text" id="projDir" placeholder="/Users/donguri">
+      <label>실행 권한</label>
+      <select id="permMode">
+        <option value="plan">🔒 제안만 — 파일 안 건드림 (분석·설계·리뷰)</option>
+        <option value="edit">✏️ 파일 수정 허용 — 코드 작성·수정 (기본 추천)</option>
+        <option value="full">⚡ 전권 위임 — push·배포·설치까지 (주의!)</option>
+      </select>
+      <label>추론 수준</label>
+      <select id="thinkLv">
+        <option value="normal">기본 — 빠름</option>
+        <option value="deep">깊게 — 복잡한 문제용 (느림)</option>
+      </select>
+      <label>기본 두뇌 (팀장 + 기본값)</label>
+      <select id="model">
+        <option value="sonnet">Claude Sonnet — 균형 (추천)</option>
+        <option value="haiku">Claude Haiku — 빠름</option>
+        <option value="opus">Claude Opus — 상급</option>
+        <option value="fable">Claude Fable 5 — 최상급</option>
+        <option value="codex" id="codexOpt" disabled>Codex — (CLI 미설치)</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h2>🏗️ 프로젝트 컨텍스트</h2>
+      <textarea id="projCtx" style="min-height:120px; font-size:11.5px; line-height:1.5;"></textarea>
+      <div class="chk"><input type="checkbox" id="autoCtx" checked> <label for="autoCtx" style="margin:0">작업 완료 시 팀장이 컨텍스트·추천 지시 자동 갱신</label></div>
+    </div>
+
+    <div class="card">
+      <h2>📋 업무 지시</h2>
+      <div class="presets" id="presetWrap"></div>
+      <textarea id="order" placeholder="예: 브리핑 요약 프롬프트를 개선하고 실제 코드에 반영해줘."></textarea>
+      <div class="row">
+        <button id="goBtn" style="flex:1">지시하기</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>👥 직원 현황 (직원별 두뇌 선택)</h2>
+      <div class="staff" id="staffList"></div>
+    </div>
+
+    <div class="card">
+      <h2>📝 업무 일지</h2>
+      <div id="log"></div>
+    </div>
+
+    <div class="card">
+      <h2>📦 완성된 결과물</h2>
+      <div id="projects"><div style="font-size:12px;color:var(--sub)">아직 없음</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="modalBg">
+  <div id="modal">
+    <div id="modalHead">
+      <h3 id="modalTitle"></h3>
+      <button class="ghost" id="dlBtn">⬇ 다운로드 (.md)</button>
+      <button class="ghost" id="closeBtn">닫기</button>
+    </div>
+    <div id="modalBody" class="md"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   동구리 오피스 v3 — Claude Code(구독) 연동판
+============================================================ */
+
+// ---------- 캔버스 ----------
+const W = 480, H = 300;
+const cv = document.getElementById('cv');
+cv.width = W; cv.height = H;
+cv.style.aspectRatio = W + '/' + H;
+const ctx = cv.getContext('2d');
+
+// ---------- 직원 정의 ----------
+const STAFF = [
+  { id:'lead',    name:'김팀장', role:'기획·총괄',  hair:'#4a3120', shirt:'#41546e', pants:'#2b3550', desk:{x:78,  y:158} },
+  { id:'dev',     name:'이대리', role:'개발',       hair:'#16161c', shirt:'#38b764', pants:'#28303f', desk:{x:255, y:118} },
+  { id:'design',  name:'박주임', role:'디자인',     hair:'#8a4433', shirt:'#b13e53', pants:'#3a2b3d', desk:{x:378, y:118} },
+  { id:'analysis',name:'최과장', role:'분석·리서치', hair:'#26243c', shirt:'#8d56b0', pants:'#2c2c44', desk:{x:255, y:222} },
+  { id:'qa',      name:'정사원', role:'검토·문서',  hair:'#6b5836', shirt:'#ef7d57', pants:'#33404f', desk:{x:378, y:222} },
+];
+const BY_ID = Object.fromEntries(STAFF.map(s=>[s.id,s]));
+
+const chars = STAFF.map(s => ({
+  ...s,
+  x: s.desk.x + (Math.random()*50-25), y: s.desk.y + 48,
+  tx:null, ty:null, speed:0.75,
+  state:'idle', face:1, idleTimer:Math.random()*200,
+  bubbleEl:null, bubbleUntil:0, onArrive:null,
+}));
+
+// ---------- 스프라이트 ----------
+const SPR_STAND = [
+"..OOOOOO..",
+".OHHHHHHO.",
+".OHHHHHHO.",
+".OHSSSSHO.",
+".OSSSSSSO.",
+".OSESSESO.",
+".OSSSSSSO.",
+"..OSSSSO..",
+".OCCCCCCO.",
+"OACCCCCCAO",
+"OACCCCCCAO",
+".OCCCCCCO.",
+".OPPPPPPO.",
+".OPPOOPPO.",
+".OPPOOPPO.",
+".OBBOOBBO."
+];
+const SPR_WALK = SPR_STAND.slice(0,12).concat([
+".OPPPPPPO.",
+"OPPO..OPPO",
+"OPPO..OPPO",
+"OBBO..OBBO"
+]);
+function palFor(c){
+  return {O:'#181425', H:c.hair, S:'#f2c6a0', E:'#181425', C:c.shirt, A:'#f2c6a0', P:c.pants, B:'#181425'};
+}
+function drawSprite(c, rows, cropBottom){
+  const pal = palFor(c);
+  const x0 = Math.round(c.x)-5, y0 = Math.round(c.y)-16;
+  const n = cropBottom ? 12 : rows.length;
+  for(let r=0; r<n; r++){
+    const row = rows[r];
+    for(let i=0;i<10;i++){
+      const ch = c.face===1 ? row[i] : row[9-i];
+      if(ch==='.') continue;
+      ctx.fillStyle = pal[ch];
+      ctx.fillRect(x0+i, y0+r, 1, 1);
+    }
+  }
+}
+function drawChar(c){
+  const bob = (c.state==='work') ? (Math.floor(perfNow/280)%2) : 0;
+  const walking = c.state==='walk' && Math.floor(perfNow/130)%2===0;
+  ctx.save();
+  ctx.translate(0,-bob);
+  if(c.state!=='work'){
+    ctx.fillStyle='rgba(0,0,0,.28)';
+    ctx.fillRect(Math.round(c.x)-4, Math.round(c.y), 8, 2);
+  }
+  drawSprite(c, walking?SPR_WALK:SPR_STAND, c.state==='work');
+  ctx.restore();
+  if(c.state==='done'){
+    ctx.fillStyle='#38b764'; ctx.font='bold 10px monospace';
+    ctx.fillText('✓', Math.round(c.x)+6, Math.round(c.y)-18);
+  }
+}
+
+// ---------- 오피스 ----------
+function drawOffice(){
+  ctx.fillStyle='#3a4466'; ctx.fillRect(0,0,W,46);
+  for(let x=0;x<W;x+=48){ ctx.fillStyle='#36405f'; ctx.fillRect(x,0,2,46); }
+  ctx.fillStyle='#262b44'; ctx.fillRect(0,44,W,3);
+  for(let y=46; y<H; y+=16){
+    for(let x=0; x<W; x+=16){
+      const even = ((x/16 + y/16) % 2 === 0);
+      ctx.fillStyle = even ? '#545f7d' : '#4d5875';
+      ctx.fillRect(x,y,16,16);
+      ctx.fillStyle = 'rgba(0,0,0,.06)';
+      ctx.fillRect(x,y+15,16,1); ctx.fillRect(x+15,y,1,16);
+    }
+  }
+  ctx.fillStyle='#5f5480'; ctx.fillRect(28,124,120,64);
+  ctx.fillStyle='#6a5e8f'; ctx.fillRect(32,128,112,56);
+  ctx.fillStyle='#181425'; ctx.fillRect(16,8,128,26);
+  ctx.fillStyle='#0f0c1a'; ctx.fillRect(16,30,128,4);
+  ctx.fillStyle='#2a2440'; ctx.fillRect(18,10,124,22);
+  for(let i=0;i<3;i++){
+    const wx = 200 + i*92;
+    ctx.fillStyle='#181425'; ctx.fillRect(wx,6,44,30);
+    ctx.fillStyle='#7fb4e8'; ctx.fillRect(wx+3,9,38,24);
+    ctx.fillStyle='#a8d4f5'; ctx.fillRect(wx+3,9,38,8);
+    ctx.fillStyle='#e8f4fc'; ctx.fillRect(wx+5,11,10,4);
+    ctx.fillStyle='#181425'; ctx.fillRect(wx+20,9,3,24);
+  }
+  ctx.fillStyle='#181425'; ctx.fillRect(162,12,18,18);
+  ctx.fillStyle='#f4f4f4'; ctx.fillRect(164,14,14,14);
+  ctx.fillStyle='#181425';
+  ctx.fillRect(170,17,2,5); ctx.fillRect(171,20,4,2);
+  ctx.fillStyle='#181425'; ctx.fillRect(28,58,104,54);
+  ctx.fillStyle='#f6f6f2'; ctx.fillRect(32,62,96,46);
+  ctx.fillStyle='#b13e53'; ctx.fillRect(38,68,42,3);
+  ctx.fillStyle='#41a6f6'; ctx.fillRect(38,76,66,3);
+  ctx.fillStyle='#38b764'; ctx.fillRect(38,84,30,3);
+  ctx.fillStyle='#8d56b0'; ctx.fillRect(38,92,52,3);
+  ctx.fillStyle='#b8b8b8'; ctx.fillRect(96,98,24,4);
+  ctx.fillStyle='#181425'; ctx.fillRect(146,62,26,42);
+  ctx.fillStyle='#5a6988'; ctx.fillRect(149,65,20,16);
+  ctx.fillStyle='#82dcf5'; ctx.fillRect(151,67,16,6);
+  ctx.fillStyle='#e5484d'; ctx.fillRect(155,84,8,4);
+  ctx.fillStyle='#f4f4f4'; ctx.fillRect(154,92,10,8);
+  ctx.fillStyle='#4a2f27'; ctx.fillRect(408,54,58,56);
+  ctx.fillStyle='#3a241e'; ctx.fillRect(411,58,52,22);
+  ctx.fillStyle='#3a241e'; ctx.fillRect(411,84,52,22);
+  const bookCols=['#b13e53','#41a6f6','#38b764','#ffcd75','#8d56b0','#ef7d57'];
+  for(let i=0;i<8;i++){
+    ctx.fillStyle=bookCols[i%6];
+    ctx.fillRect(413+i*6, 60+(i%2?2:0), 5, 18-(i%2?2:0));
+    ctx.fillStyle=bookCols[(i+3)%6];
+    ctx.fillRect(413+i*6, 86+(i%3?3:0), 5, 18-(i%3?3:0));
+  }
+  drawPlant(452,250); drawPlant(12,250); drawPlant(178,58);
+  STAFF.forEach(drawDesk);
+}
+function drawPlant(x,y){
+  ctx.fillStyle='#181425'; ctx.fillRect(x+3,y+21,16,11);
+  ctx.fillStyle='#b86f50'; ctx.fillRect(x+4,y+22,14,9);
+  ctx.fillStyle='#8a5038'; ctx.fillRect(x+4,y+22,14,2);
+  ctx.fillStyle='#265c42'; ctx.fillRect(x+9,y+6,4,16);
+  ctx.fillStyle='#38b764';
+  ctx.fillRect(x+1,y+8,8,8); ctx.fillRect(x+13,y+8,8,8); ctx.fillRect(x+5,y,12,10);
+  ctx.fillStyle='#5edc9b'; ctx.fillRect(x+7,y+2,4,3);
+}
+function drawDesk(s){
+  const d = s.desk;
+  const working = chars.find(c=>c.id===s.id)?.state==='work';
+  ctx.fillStyle='#181425'; ctx.fillRect(d.x+2, d.y-4, 16, 6);
+  ctx.fillStyle='#181425'; ctx.fillRect(d.x-24, d.y+9, 70, 13);
+  ctx.fillStyle='#b86f50'; ctx.fillRect(d.x-23, d.y+10, 68, 8);
+  ctx.fillStyle='#8a5038'; ctx.fillRect(d.x-23, d.y+18, 68, 3);
+  ctx.fillStyle='#181425';
+  ctx.fillRect(d.x-21, d.y+21, 5, 12); ctx.fillRect(d.x+38, d.y+21, 5, 12);
+  ctx.fillStyle='#181425'; ctx.fillRect(d.x+8, d.y-12, 26, 20);
+  ctx.fillStyle = working ? '#101828' : '#2e3250';
+  ctx.fillRect(d.x+10, d.y-10, 22, 15);
+  if(working){
+    const t = Math.floor(perfNow/220);
+    for(let i=0;i<4;i++){
+      const w = 4 + ((t+i*3)%5)*3;
+      ctx.fillStyle = ['#82dcf5','#38b764','#ffcd75','#e8e9f3'][i];
+      ctx.fillRect(d.x+12, d.y-8+i*3, w, 2);
+    }
+  }
+  ctx.fillStyle='#181425'; ctx.fillRect(d.x+18, d.y+8, 6, 2);
+  ctx.fillStyle='#262b44'; ctx.fillRect(d.x-8, d.y+12, 18, 4);
+  ctx.fillStyle='#3a4466'; ctx.fillRect(d.x-7, d.y+13, 16, 2);
+  ctx.fillStyle='#262b44'; ctx.fillRect(d.x+14, d.y+13, 4, 3);
+  ctx.fillStyle='#f4f4f4'; ctx.fillRect(d.x-20, d.y+11, 9, 6);
+  ctx.fillStyle='#b8b8b8'; ctx.fillRect(d.x-19, d.y+13, 7, 1);
+  ctx.fillStyle=s.shirt; ctx.fillRect(d.x+36, d.y+11, 5, 5);
+  ctx.fillStyle='#ffcd75'; ctx.fillRect(d.x-14, d.y+6, 14, 4);
+}
+
+// ---------- 말풍선 ----------
+const bubbleLayer = document.getElementById('bubbles');
+function say(c, text, ms=2600){
+  if(!c.bubbleEl){
+    c.bubbleEl=document.createElement('div');
+    c.bubbleEl.className='bubble';
+    bubbleLayer.parentElement.appendChild(c.bubbleEl);
+  }
+  c.bubbleEl.textContent=text;
+  c.bubbleEl.style.display='block';
+  c.bubbleUntil=performance.now()+ms;
+}
+function updateBubbles(){
+  const rect=cv.getBoundingClientRect();
+  const sx=rect.width/W, sy=rect.height/H;
+  chars.forEach(c=>{
+    if(!c.bubbleEl) return;
+    if(performance.now()>c.bubbleUntil){ c.bubbleEl.style.display='none'; return; }
+    c.bubbleEl.style.left=(c.x*sx)+'px';
+    c.bubbleEl.style.top=((c.y-22)*sy)+'px';
+  });
+}
+
+// ---------- 이동/상태 ----------
+const FLOOR={x0:18, y0:64, x1:W-18, y1:H-12};
+function walkTo(c,tx,ty,cb){ c.tx=tx; c.ty=ty; c.state='walk'; c.onArrive=cb||null; }
+function updateChar(c,dt){
+  if(c.state==='walk' && c.tx!==null){
+    const dx=c.tx-c.x, dy=c.ty-c.y, dist=Math.hypot(dx,dy);
+    if(dist<1.4){
+      c.x=c.tx; c.y=c.ty; c.tx=c.ty=null;
+      const cb=c.onArrive; c.onArrive=null; c.state='idle';
+      if(cb) cb();
+    }else{
+      c.x+=dx/dist*c.speed*dt; c.y+=dy/dist*c.speed*dt;
+      if(Math.abs(dx)>0.5) c.face=dx>0?1:-1;
+    }
+  }else if(c.state==='idle'){
+    c.idleTimer-=dt;
+    if(c.idleTimer<=0){
+      c.idleTimer=200+Math.random()*450;
+      if(Math.random()<0.55){
+        walkTo(c,
+          FLOOR.x0+12+Math.random()*(FLOOR.x1-FLOOR.x0-24),
+          FLOOR.y0+18+Math.random()*(FLOOR.y1-FLOOR.y0-30));
+      }
+    }
+  }
+}
+
+// ---------- 루프 ----------
+let perfNow=0, last=performance.now();
+function loop(t){
+  const dt=Math.min((t-last)/16.6,3); last=t; perfNow=t;
+  ctx.clearRect(0,0,W,H);
+  drawOffice();
+  chars.forEach(c=>updateChar(c,dt));
+  [...chars].sort((a,b)=>a.y-b.y).forEach(drawChar);
+  updateBubbles();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------- 두뇌 ----------
+const BRAINS=[
+  {v:'sonnet', label:'Sonnet'},
+  {v:'haiku', label:'Haiku'},
+  {v:'opus', label:'Opus'},
+  {v:'fable', label:'Fable 5'},
+  {v:'codex', label:'Codex'},
+];
+let codexAvailable=false;
+
+// ---------- 직원 현황 UI ----------
+const staffList=document.getElementById('staffList');
+const stEls={}, brainSels={};
+let savedBrains={};
+try{ savedBrains=JSON.parse(localStorage.getItem('smallco3_brains')||'{}'); }catch(e){}
+STAFF.forEach(s=>{
+  const row=document.createElement('div');
+  row.className='staffRow';
+  const opts=['<option value="">기본</option>']
+    .concat(BRAINS.map(b=>`<option value="${b.v}" ${b.v==='codex'?'data-codex="1"':''}>${b.label}</option>`)).join('');
+  row.innerHTML=`<span class="swatch" style="background:${s.shirt}"></span>
+    <b>${s.name}</b> <span style="color:var(--sub);font-size:11px">${s.role}</span>
+    <select class="brainSel" data-id="${s.id}">${opts}</select>
+    <span class="st" id="st-${s.id}"><span class="dot2" style="background:#666d97"></span> 대기</span>`;
+  staffList.appendChild(row);
+  stEls[s.id]=row.querySelector('.st');
+  const sel=row.querySelector('select');
+  brainSels[s.id]=sel;
+  if(savedBrains[s.id]) sel.value=savedBrains[s.id];
+  sel.addEventListener('change',()=>{
+    savedBrains[s.id]=sel.value;
+    try{ localStorage.setItem('smallco3_brains', JSON.stringify(savedBrains)); }catch(e){}
+  });
+});
+function setStatus(id,st){
+  const color = st==='작업중' ? 'var(--accent)' : st==='완료' ? 'var(--green)' : st==='실패' ? 'var(--red)' : '#666d97';
+  stEls[id].innerHTML=`<span class="dot2" style="background:${color}"></span> ${st}`;
+}
+
+// ---------- 로그 ----------
+const logEl=document.getElementById('log');
+function log(msg,cls=''){
+  const t=new Date().toTimeString().slice(0,8);
+  const d=document.createElement('div');
+  d.innerHTML=`<span class="t">${t}</span><span class="${cls}">${msg}</span>`;
+  logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight;
+}
+
+// ---------- 설정 ----------
+const modelEl=document.getElementById('model');
+const projCtxEl=document.getElementById('projCtx');
+const projDirEl=document.getElementById('projDir');
+const permModeEl=document.getElementById('permMode');
+const thinkLvEl=document.getElementById('thinkLv');
+
+const DEFAULT_CTX=`프로젝트명: stock-briefing (주식 공시 브리핑 서비스) — 동구리의 포트폴리오 프로젝트
+
+현재 완성된 것 (Phase 1~2-1):
+- DART 공시 자동 수집: 관심 8종목, GitHub Actions로 매일 1회 실행
+- Gemini flash-lite로 공시 요약 → 메일 + 대시보드(정적 페이지)에 "그날의 브리핑" 표시
+- Gemini embedding-001로 공시 원문 청크 인덱싱 → Supabase 벡터DB 영구 저장 (RAG용, match_filings 함수 준비됨)
+- 안정화 완료: 429/503 재시도, 종목별 실패 격리, 인덱싱 중복 스킵
+
+다음 단계:
+- Phase 2-2: 질문하는 웹앱 — 저장소에 web/ 폴더 추가, Next.js. 질문 → 임베딩 → Supabase match_filings 검색 → Gemini가 근거 기반 답변 + 출처 공시 링크 표시. API Route로 Secret key 보호, Vercel 배포
+- Phase 3: 로그인, 보유 종목(수량·단가) 등록, 알림, 결제 실험
+
+기술 스택: Python(수집·요약·인덱싱), Gemini API, Supabase(pgvector), GitHub Actions, Next.js(예정), Vercel(예정)`;
+
+try{
+  projCtxEl.value=localStorage.getItem('smallco3_ctx')||DEFAULT_CTX;
+  const m=localStorage.getItem('smallco3_model'); if(m) modelEl.value=m;
+  const d=localStorage.getItem('smallco3_dir'); if(d) projDirEl.value=d;
+  const pm=localStorage.getItem('smallco3_mode'); if(pm) permModeEl.value=pm;
+  const tl=localStorage.getItem('smallco3_think'); if(tl) thinkLvEl.value=tl;
+}catch(e){ projCtxEl.value=DEFAULT_CTX; }
+
+projCtxEl.addEventListener('input',()=>{try{localStorage.setItem('smallco3_ctx',projCtxEl.value);}catch(e){}});
+modelEl.addEventListener('change',()=>{try{localStorage.setItem('smallco3_model',modelEl.value);}catch(e){}});
+projDirEl.addEventListener('input',()=>{try{localStorage.setItem('smallco3_dir',projDirEl.value);}catch(e){}});
+permModeEl.addEventListener('change',()=>{try{localStorage.setItem('smallco3_mode',permModeEl.value);}catch(e){}});
+thinkLvEl.addEventListener('change',()=>{try{localStorage.setItem('smallco3_think',thinkLvEl.value);}catch(e){}});
+
+// ---------- 서버 상태 ----------
+const srvStat=document.getElementById('srvStat');
+(async ()=>{
+  try{
+    const r=await fetch('/api/health');
+    const h=await r.json();
+    codexAvailable=!!h.codex;
+    let txt=`🟢 서버 연결됨 · Claude Code: ${h.claude||'미설치!'}`;
+    if(h.codex){ txt+=` · Codex: ${h.codex}`; document.getElementById('codexOpt').disabled=false; document.getElementById('codexOpt').textContent='Codex — 코딩 특화'; }
+    else{
+      document.querySelectorAll('option[data-codex]').forEach(o=>o.disabled=true);
+    }
+    srvStat.textContent=txt;
+    srvStat.className='good';
+    if(!projDirEl.value && h.defaultDir) projDirEl.value=h.defaultDir;
+    log('오피스 오픈. 직원들이 출근했습니다.','hl');
+    if(!h.claude){ log('⚠️ claude 명령을 찾지 못했습니다. Claude Code 설치를 확인하세요.','err'); }
+  }catch(e){
+    srvStat.textContent='🔴 서버에 연결할 수 없습니다. 터미널에서 `node server.js`를 실행한 뒤 http://localhost:3777 로 여세요. (파일을 직접 열면 작동하지 않습니다)';
+    srvStat.className='bad';
+  }
+})();
+
+// ---------- 프리셋 ----------
+const DEFAULT_PRESETS=[
+  {label:'Phase 2-2 웹앱 시작', task:'Phase 2-2 질문 웹앱을 시작하자. web/ 폴더에 Next.js 프로젝트 구조를 잡고, 채팅 화면과 API Route(질문→임베딩→match_filings 검색→Gemini 답변+출처) 코드를 실제로 작성해줘.'},
+  {label:'코드 리뷰', task:'프로젝트 코드 전체를 리뷰해줘. 버그 가능성, 개선점, 리팩토링 우선순위를 정리해줘. (파일 수정은 하지 말 것)'},
+  {label:'오늘 작업 플랜', task:'프로젝트 폴더의 실제 코드와 컨텍스트를 기준으로 오늘 할 작업 플랜을 짜줘. 우선순위와 예상 소요시간 포함.'},
+];
+let presets=DEFAULT_PRESETS;
+try{
+  const sp=JSON.parse(localStorage.getItem('smallco3_presets')||'null');
+  if(Array.isArray(sp)&&sp.length) presets=sp;
+}catch(e){}
+const presetWrap=document.getElementById('presetWrap');
+function renderPresets(){
+  presetWrap.innerHTML='';
+  presets.forEach(p=>{
+    const b=document.createElement('button');
+    b.className='mini'; b.textContent=p.label; b.title=p.task;
+    b.addEventListener('click',()=>{ document.getElementById('order').value=p.task; });
+    presetWrap.appendChild(b);
+  });
+}
+renderPresets();
+
+// ---------- LLM 호출 (서버 경유 → Claude Code / Codex) ----------
+async function callLLM(brain, system, user, opts={}){
+  const engine = brain==='codex' ? 'codex' : 'claude';
+  const res=await fetch('/api/run',{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({
+      engine,
+      model: engine==='claude' ? brain : undefined,
+      system, prompt:user,
+      mode: opts.mode || permModeEl.value,
+      thinking: thinkLvEl.value,
+      cwd: projDirEl.value.trim(),
+    })
+  });
+  const data=await res.json();
+  if(!data.ok) throw new Error(data.error||'실행 실패');
+  return data.text;
+}
+function extractJSON(text){
+  const cleaned=text.replace(/```json|```/g,'');
+  const s=cleaned.indexOf('{'), e=cleaned.lastIndexOf('}');
+  if(s<0||e<0) throw new Error('업무 분배안(JSON) 해석 실패');
+  return JSON.parse(cleaned.slice(s,e+1));
+}
+function brainOf(staffId){
+  const sel=brainSels[staffId];
+  return (sel && sel.value) ? sel.value : modelEl.value;
+}
+function brainLabel(v){ return (BRAINS.find(b=>b.v===v)||{}).label||v; }
+
+// ---------- 완료 알림 ----------
+function beep(n=1){
+  try{
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    for(let i=0;i<n;i++){
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.frequency.value=i%2? 1175 : 880;
+      g.gain.setValueAtTime(.09, ac.currentTime+i*.22);
+      g.gain.exponentialRampToValueAtTime(.001, ac.currentTime+i*.22+.18);
+      o.start(ac.currentTime+i*.22); o.stop(ac.currentTime+i*.22+.2);
+    }
+  }catch(e){}
+}
+function notifyTitle(t){ document.title=t; }
+window.addEventListener('focus',()=>{ document.title='동구리 오피스'; });
+
+// ---------- 팀장 분배안 패널 ----------
+const briefBody=document.getElementById('briefBody');
+let brief=null;
+let lastChat=null;
+function renderBrief(){
+  if(!brief){ return; }
+  if(brief.chat){
+    briefBody.innerHTML=`<div class="planLine"><b>김팀장:</b> 💬 답변</div>
+      <div class="assign"><div class="out md" style="max-height:420px">${mdToHtml(brief.reply)}</div></div>
+      <div class="row" style="margin-top:10px">
+        <button id="goAhead" style="flex:1">👍 이대로 진행하기 (팀원들에게 분배)</button>
+      </div>
+      <div style="font-size:11px;color:var(--sub);margin-top:6px">그냥 참고만 할 거면 아무것도 누르지 않아도 됩니다. 다시 질문해도 돼요.</div>`;
+    const ga=document.getElementById('goAhead');
+    if(ga) ga.onclick=()=>runOrder(true);
+    return;
+  }
+  let html=`<div class="planLine"><b>김팀장:</b> "${escapeHtml(brief.plan)}"</div>`;
+  brief.items.forEach(it=>{
+    const w=BY_ID[it.workerId]||{name:'?',role:'?',shirt:'#666'};
+    const stColor= it.status==='작업중'?'var(--accent)': it.status==='완료'?'var(--green)': it.status==='실패'?'var(--red)':'var(--sub)';
+    html+=`<div class="assign">
+      <div class="head">
+        <span class="swatch" style="background:${w.shirt}"></span>
+        <span class="who">${w.name}</span><span class="role">${w.role} · 두뇌: ${brainLabel(it.brain)}</span>
+        <span class="stat" style="color:${stColor}">● ${it.status}</span>
+      </div>
+      <div class="task">${escapeHtml(it.task)}</div>
+      ${it.output?`<details ${it.status==='실패'?'open':''}><summary>결과 보기 (${it.output.length.toLocaleString()}자)</summary><div class="out md">${mdToHtml(it.output)}</div></details>`:''}
+    </div>`;
+  });
+  if(brief.final){
+    html+=`<div class="row" style="margin-top:10px"><button id="openFinal" style="flex:1">📄 최종 보고서 열기 — ${escapeHtml(brief.title)}</button></div>`;
+  }
+  html+=`<div class="rawWrap"><details><summary>팀장 원문 답변(JSON) 보기</summary><pre>${escapeHtml(brief.raw)}</pre></details></div>`;
+  briefBody.innerHTML=html;
+  const fb=document.getElementById('openFinal');
+  if(fb) fb.onclick=()=>openProject(0);
+}
+
+// ---------- 오케스트레이션 ----------
+const goBtn=document.getElementById('goBtn');
+let busy=false;
+let projects=[];
+try{
+  const sp=JSON.parse(localStorage.getItem('smallco3_projects')||'[]');
+  projects=sp.map(p=>({title:p.title, md:p.md, ts:new Date(p.ts)}));
+}catch(e){}
+function saveProjects(){
+  try{
+    localStorage.setItem('smallco3_projects',
+      JSON.stringify(projects.slice(0,30).map(p=>({title:p.title, md:p.md, ts:p.ts.toISOString()}))));
+  }catch(e){}
+}
+
+goBtn.addEventListener('click',()=>runOrder(false));
+document.getElementById('order').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)) runOrder(false);
+});
+
+function modeNote(){
+  const m=permModeEl.value;
+  if(m==='plan') return '지금은 "제안만" 모드입니다. 파일을 수정하지 말고 분석과 제안만 하세요.';
+  if(m==='full') return '전권 모드입니다. 필요한 파일 수정, git 커밋/푸시, 명령 실행을 직접 수행하고, 무엇을 했는지 구체적으로 보고하세요.';
+  return '파일 수정이 허용되어 있습니다. 프로젝트 폴더의 실제 파일을 읽고 필요한 코드를 직접 작성/수정한 뒤, 무엇을 바꿨는지 보고하세요. (git push는 하지 마세요)';
+}
+
+async function runOrder(forcePlan){
+  let order=document.getElementById('order').value.trim();
+  if(forcePlan && lastChat) order=lastChat.question;
+  if(!order){ alert('업무 지시를 입력하세요.'); return; }
+  if(busy) return;
+  busy=true; goBtn.disabled=true; goBtn.textContent='업무 진행중...';
+  STAFF.forEach(s=>setStatus(s.id,'대기'));
+  const projCtx=projCtxEl.value.trim();
+
+  const lead=chars.find(c=>c.id==='lead');
+  try{
+    log(`사장님 지시 접수: <span class="hl">"${escapeHtml(order.slice(0,60))}${order.length>60?'…':''}"</span>`);
+    setStatus('lead','작업중');
+    await walkAsync(lead, 80, 122);
+    lead.state='work'; lead.face=-1; say(lead,'업무 분배 계획 중... 🤔',600000);
+
+    const planText=await callLLM(modelEl.value,
+`당신은 동구리 오피스의 팀장 김팀장입니다. 사장의 말을 먼저 판단하세요.
+프로젝트 폴더의 실제 파일 구조를 빠르게 훑어본 뒤 답해도 좋습니다 (수정은 금지).
+
+[회사가 진행 중인 프로젝트]
+${projCtx}
+
+판단 기준:
+- 사장의 말이 질문·상담·논의(예: "우리 뭐 해야 해?", "이거 어떻게 생각해?")이면 → 작업을 분배하지 말고 팀장으로서 직접 답하세요:
+  {"type":"chat","reply":"답변 (마크다운 가능, 필요하면 실행 제안 포함)"}
+- 실행할 작업 지시이면 → 팀원들에게 분배하세요:
+  {"type":"plan","plan":"계획 한 줄 요약","title":"결과물 제목(짧게)","subtasks":[{"worker":"dev|design|analysis|qa","task":"구체적 업무 지시"}]}
+
+팀원: dev(이대리/개발자·코드작성), design(박주임/디자이너·UI/UX·화면설계), analysis(최과장/분석·리서치·데이터), qa(정사원/검토·문서화·체크리스트)
+subtasks는 꼭 필요한 팀원만 1~4명. 여러 팀원이 같은 파일을 동시에 수정하지 않도록 나누세요.
+반드시 위 JSON 중 하나만 최종 출력. 다른 텍스트 금지.${forcePlan?'\n(사장이 진행을 승인했습니다. 반드시 type:"plan"으로 분배하세요.)':''}`,
+      `사장: ${order}`+(forcePlan&&lastChat?`\n\n[앞선 논의에서 팀장인 당신이 제안한 내용 — 이 방향대로 분배]\n${lastChat.reply.slice(0,2000)}`:''),
+      {mode:'plan'});
+    const plan=extractJSON(planText);
+
+    // 질문이면: 팀장이 답변만 하고 종료
+    if(plan.type==='chat'){
+      lead.state='idle';
+      say(lead,'사장님, 답변드렸습니다 💬',4000);
+      setStatus('lead','완료');
+      lastChat={question:order, reply:plan.reply||''};
+      brief={chat:true, reply:plan.reply||''};
+      renderBrief();
+      log('김팀장이 답변했습니다. (분배 없음 — 아래 패널 확인)','hl');
+      beep(1); notifyTitle('💬 팀장 답변 — 동구리 오피스');
+      return;
+    }
+    if(!Array.isArray(plan.subtasks)||plan.subtasks.length===0) throw new Error('분배된 업무가 없습니다');
+
+    lead.state='idle';
+    say(lead,'업무 분배 완료! 다들 모여주세요 📢',3500);
+    log(`김팀장 계획: <span class="hl">${escapeHtml(plan.plan||'')}</span>`);
+    setStatus('lead','완료');
+
+    brief={
+      plan:plan.plan||'', title:plan.title||order.slice(0,30), raw:planText.trim(),
+      items:plan.subtasks.map(t=>{
+        const wid=BY_ID[t.worker]?t.worker:'qa';
+        return {workerId:wid, task:t.task, status:'대기', output:'', brain:brainOf(wid)};
+      }),
+      final:null
+    };
+    renderBrief();
+
+    const results=await Promise.all(brief.items.map((it,i)=>runWorker(it,order,plan.plan,projCtx,i)));
+
+    setStatus('lead','작업중');
+    await walkAsync(lead, lead.desk.x+10, lead.desk.y+12);
+    lead.state='work'; say(lead,'결과물 취합하는 중... 📎',600000);
+    log('김팀장이 결과물을 취합합니다...','hl');
+
+    const finalMd=await callLLM(modelEl.value,
+`당신은 동구리 오피스의 팀장 김팀장입니다. 팀원들의 작업 결과를 하나의 완성된 최종 보고서로 통합하세요. 파일은 수정하지 마세요.
+- 마크다운 문서로 출력 (제목 포함)
+- 실제로 수정/생성된 파일이 있다면 목록으로 정리
+- 팀원 결과물의 핵심을 모두 반영하되 중복 제거
+- 마지막에 "--- 참여: (참여 팀원 이름들)" 한 줄 추가`,
+      `사장 지시: ${order}\n\n프로젝트 컨텍스트:\n${projCtx}\n\n계획: ${plan.plan}\n\n`+
+      results.map(r=>`[${r.name}(${r.role})의 결과]\n${r.output}`).join('\n\n----\n\n'),
+      {mode:'plan'});
+
+    lead.state='idle';
+    say(lead,'사장님, 보고드립니다! 🎉',4000);
+    setStatus('lead','완료');
+
+    projects.unshift({title:brief.title, md:finalMd, ts:new Date()});
+    saveProjects();
+    brief.final=true;
+    renderBrief(); renderProjects();
+    log(`✅ <span class="ok">프로젝트 완료: ${escapeHtml(brief.title)}</span>`);
+    beep(3); notifyTitle('✅ 업무 완료 — 동구리 오피스');
+    openProject(0);
+
+    if(document.getElementById('autoCtx').checked){
+      try{
+        say(lead,'업무 일지 정리 중... 🗂️',120000);
+        log('김팀장이 프로젝트 컨텍스트와 추천 지시를 갱신합니다...');
+        const updText=await callLLM(modelEl.value,
+`당신은 동구리 오피스의 팀장 김팀장입니다. 방금 끝난 작업을 반영해 두 가지를 갱신하세요. 파일은 수정하지 마세요.
+반드시 아래 JSON만 출력. 다른 텍스트 금지.
+{"context":"갱신된 프로젝트 컨텍스트 전문","suggestions":[{"label":"버튼용 짧은 이름(10자 내)","task":"구체적 지시문 1~2문장"},...3개]}
+- context: 기존 컨텍스트의 형식과 분량을 유지하되, 이번 작업으로 진행/결정된 내용을 반영.
+- suggestions: 지금 상태에서 사장이 내리면 좋을 다음 지시 3개.`,
+          `기존 컨텍스트:\n${projCtx}\n\n이번 지시: ${order}\n\n최종 보고서 요약(앞부분):\n${finalMd.slice(0,2500)}`,
+          {mode:'plan'});
+        const upd=extractJSON(updText);
+        if(upd.context && upd.context.length>50){
+          projCtxEl.value=upd.context;
+          try{ localStorage.setItem('smallco3_ctx',upd.context); }catch(e){}
+        }
+        if(Array.isArray(upd.suggestions)&&upd.suggestions.length){
+          presets=upd.suggestions.filter(s=>s.label&&s.task).slice(0,3);
+          try{ localStorage.setItem('smallco3_presets',JSON.stringify(presets)); }catch(e){}
+          renderPresets();
+        }
+        say(lead,'일지 정리 완료! 다음 할 일도 정리해뒀습니다 📌',4000);
+        log('<span class="ok">컨텍스트·추천 지시 갱신 완료</span>');
+      }catch(e2){
+        log(`<span class="err">컨텍스트 자동 갱신 실패 (작업 결과에는 영향 없음): ${escapeHtml(e2.message)}</span>`);
+      }
+    }
+
+  }catch(err){
+    lead.state='idle';
+    setStatus('lead','실패');
+    say(lead,'문제가 생겼습니다... 😰',4000);
+    log(`❌ <span class="err">오류: ${escapeHtml(err.message)}</span>`);
+    beep(1); notifyTitle('❌ 오류 발생 — 동구리 오피스');
+  }finally{
+    busy=false; goBtn.disabled=false; goBtn.textContent='지시하기';
+    setTimeout(()=>chars.forEach(c=>{if(c.state==='done')c.state='idle';}),3000);
+  }
+}
+
+async function runWorker(it, order, planSummary, projCtx, idx){
+  const w=BY_ID[it.workerId];
+  const c=chars.find(x=>x.id===w.id);
+  await sleep(idx*600);
+  it.status='작업중'; renderBrief();
+  setStatus(w.id,'작업중');
+  say(c,'네, 알겠습니다!',1800);
+  await walkAsync(c, w.desk.x+10, w.desk.y+12);
+  c.state='work'; c.face=1;
+  say(c,workingMsg(w),600000);
+  log(`${w.name} 작업 시작... (두뇌: ${brainLabel(it.brain)})`);
+
+  const personas={
+    dev:'당신은 유능한 개발자 이대리입니다. 실행 가능한 코드와 기술적 구현을 담당합니다.',
+    design:'당신은 감각 있는 디자이너 박주임입니다. UI/UX 설계, 화면 구성, 스타일을 담당합니다.',
+    analysis:'당신은 꼼꼼한 분석가 최과장입니다. 리서치, 데이터 분석, 요구사항 분석을 담당합니다.',
+    qa:'당신은 세심한 정사원입니다. 검토, 문서화, 체크리스트, 리스크 정리를 담당합니다.',
+  };
+  try{
+    const output=await callLLM(it.brain,
+      `${personas[w.id]||personas.qa} 동구리 오피스 소속이며 한국어로 보고합니다.
+${modeNote()}
+
+[회사 프로젝트 컨텍스트]
+${projCtx}`,
+      `전체 지시: ${order}\n팀 계획: ${planSummary}\n\n당신의 담당 업무: ${it.task}\n\n작업을 마치면 결과를 마크다운으로 보고하세요. 수정한 파일이 있으면 파일명과 변경 내용을 명시하세요.`);
+    c.state='done';
+    say(c,'완료했습니다! ✅',3000);
+    setStatus(w.id,'완료');
+    it.status='완료'; it.output=output; renderBrief();
+    log(`${w.name} <span class="ok">작업 완료</span> (${output.length.toLocaleString()}자)`);
+    return {name:w.name, role:w.role, output};
+  }catch(err){
+    c.state='idle';
+    say(c,'죄송합니다, 문제가...',3000);
+    setStatus(w.id,'실패');
+    it.status='실패'; it.output='(작업 실패: '+err.message+')'; renderBrief();
+    log(`${w.name} <span class="err">작업 실패: ${escapeHtml(err.message)}</span>`);
+    return {name:w.name, role:w.role, output:'(작업 실패: '+err.message+')'};
+  }
+}
+function workingMsg(w){
+  const m={dev:'코드 작성 중... ⌨️',design:'디자인 구상 중... 🎨',analysis:'데이터 분석 중... 📊',qa:'꼼꼼히 검토 중... 🔍'};
+  return m[w.id]||'작업 중...';
+}
+function walkAsync(c,x,y){ return new Promise(res=>walkTo(c,x,y,res)); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---------- 결과물 / 모달 ----------
+const projectsEl=document.getElementById('projects');
+function renderProjects(){
+  projectsEl.innerHTML='';
+  if(projects.length===0){ projectsEl.innerHTML='<div style="font-size:12px;color:var(--sub)">아직 없음</div>'; return; }
+  projects.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='projRow';
+    row.innerHTML=`📄 <span class="nm">${escapeHtml(p.title)}</span><span style="color:var(--sub);font-size:11px">${p.ts.toTimeString().slice(0,5)}</span>`;
+    row.onclick=()=>openProject(i);
+    projectsEl.appendChild(row);
+  });
+}
+renderProjects();
+const modalBg=document.getElementById('modalBg');
+let currentProj=null;
+function openProject(i){
+  const p=projects[i]; if(!p) return;
+  currentProj=p;
+  document.getElementById('modalTitle').textContent='📄 '+p.title;
+  document.getElementById('modalBody').innerHTML=mdToHtml(p.md);
+  modalBg.style.display='flex';
+}
+document.getElementById('closeBtn').onclick=()=>modalBg.style.display='none';
+modalBg.addEventListener('click',e=>{ if(e.target===modalBg) modalBg.style.display='none'; });
+document.getElementById('dlBtn').onclick=()=>{
+  if(!currentProj) return;
+  const blob=new Blob([currentProj.md],{type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=currentProj.title.replace(/[\\/:*?"<>|]/g,'_')+'.md';
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+// ---------- 마크다운 렌더러 ----------
+function mdToHtml(md){
+  const esc=escapeHtml(md);
+  const codeBlocks=[];
+  let s=esc.replace(/```(\w*)\n([\s\S]*?)```/g,(m,lang,code)=>{
+    codeBlocks.push(`<pre><code>${code}</code></pre>`);
+    return `\n@@CODEBLOCK${codeBlocks.length-1}@@\n`;
+  });
+  s=s
+    .replace(/^### (.*)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.*)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.*)$/gm,'<h1>$1</h1>')
+    .replace(/^---+$/gm,'<hr>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^(\s*)[-*] (.*)$/gm,'$1<li>$2</li>')
+    .replace(/^(\s*)\d+\. (.*)$/gm,'$1<li>$2</li>');
+  s=s.replace(/(<li>[\s\S]*?<\/li>\n?)+/g,m=>'<ul>'+m+'</ul>');
+  s=s.split(/\n{2,}/).map(p=>{
+    if(/^<(h\d|ul|ol|pre|hr)/.test(p.trim())) return p;
+    return '<p>'+p.replace(/\n/g,'<br>')+'</p>';
+  }).join('\n');
+  s=s.replace(/(?:<p>)?@@CODEBLOCK(\d+)@@(?:<\/p>)?/g,(m,i)=>codeBlocks[+i]);
+  return s;
+}
+</script>
+</body>
+</html>
