@@ -66,43 +66,23 @@ function runCodex({prompt, system, mode, thinking, model, cwd}){
     const sandbox = mode === 'plan' ? 'read-only' : (mode === 'full' ? 'danger-full-access' : 'workspace-write');
     const full = (system ? system + '\n\n' : '') + prompt;
     const args = ['exec', '--sandbox', sandbox, '--skip-git-repo-check', '--output-last-message', tmp];
-    // 예전 화면/localStorage에서 넘어오는 미지원 모델은 사용 가능한 모델로 대체한다.
-    const supportedModel = model === 'gpt-5.3-codex' ? 'gpt-5.4-mini' : model;
-    if(supportedModel) args.push('-m', supportedModel);
+    if(model) args.push('-m', model);
     if(thinking === 'high' || thinking === 'max') args.push('-c', 'model_reasoning_effort=high');
-    // 긴 프롬프트를 명령행 인자로 넘기지 않고 stdin으로 전달한다.
-    // '-'를 명시하고 stdin을 닫아야 Codex가 추가 입력을 기다리지 않는다.
-    args.push('-');
+    args.push(full);
     const child = spawn('codex', args, {cwd});
-    let out = '', err = '', timedOut = false;
-    const cleanupTmp = ()=>{
-      try{ if(fs.existsSync(tmp)) fs.unlinkSync(tmp); }catch(e){}
-    };
-    const killer = setTimeout(()=>{
-      timedOut = true;
-      child.kill('SIGTERM');
-    }, TIMEOUT_MS);
-    child.stdout.on('data', d=> out += d);
+    let err = '';
+    const killer = setTimeout(()=>{ child.kill('SIGTERM'); }, TIMEOUT_MS);
     child.stderr.on('data', d=> err += d);
-    child.on('error', e=> {
-      clearTimeout(killer);
-      cleanupTmp();
-      resolve({ok:false, error:'codex 실행 실패: '+e.message});
-    });
-    child.on('close', code=>{
+    child.on('error', e=> { clearTimeout(killer); resolve({ok:false, error:'codex 실행 실패: '+e.message}); });
+    child.on('close', ()=>{
       clearTimeout(killer);
       try{
         const text = fs.readFileSync(tmp, 'utf-8').trim();
-        cleanupTmp();
-        if(code === 0 && text) return resolve({ok:true, text});
+        fs.unlinkSync(tmp);
+        if(text) return resolve({ok:true, text});
       }catch(e){}
-      cleanupTmp();
-      // Codex의 실제 오류는 긴 시작 로그 뒤쪽에 출력되므로 마지막 부분을 보여준다.
-      const detail = (err || out || `종료 코드 ${code}`).trim().slice(-1000);
-      resolve({ok:false, error: timedOut ? `Codex 시간 초과 (${TIMEOUT_MS/60000}분)` : 'Codex 실행 실패: '+detail});
+      resolve({ok:false, error:'Codex 결과 없음: '+err.slice(0,300)});
     });
-    child.stdin.on('error', ()=>{}); // 조기 종료 시 EPIPE 방지
-    child.stdin.end(full);
   });
 }
 
