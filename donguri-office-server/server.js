@@ -81,14 +81,14 @@ function streamRun(res, p){
     child.stdout.on('data', onLine);
     child.stderr.on('data', d=>{ errBuf += d; onLine(d); });
     child.on('error', e=>{ clearTimeout(killer); active.delete(child); finish({ok:false, error:'codex 실행 실패: '+e.message}); });
-    child.on('close', ()=>{
+    child.on('close', (code)=>{
       clearTimeout(killer); active.delete(child);
       try{
         const text = fs.readFileSync(tmp,'utf-8').trim();
         fs.unlinkSync(tmp);
         if(text) return finish({ok:true, text});
       }catch(e){}
-      finish({ok:false, error:'Codex 결과 없음: '+errBuf.slice(0,300)});
+      finish({ok:false, error:`Codex 결과 없음 (종료코드 ${code}): `+errBuf.slice(-400)});
     });
     return;
   }
